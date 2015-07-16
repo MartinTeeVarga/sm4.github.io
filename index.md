@@ -4,7 +4,7 @@ title: sm4 bits
 ---
 {% include JB/setup %}
 
-I get to use a lot of new technologies in my current job at Pacific Knowledge Systems. Everyday I am going through a lot of frustration since not many people do what we do now, resources are scattered and questions on Stackoverflow unanswered. I am going to share my findings to hopefully save somebody else from the same fate.
+I get to use a lot of new technologies in my current job. Everyday I am going through a lot of frustration since not many people do what we do now, resources are scattered and questions on Stackoverflow unanswered. I am going to share my findings to hopefully save somebody else from the same fate.
 
 <ul class="posts">
   {% for post in site.posts %}
