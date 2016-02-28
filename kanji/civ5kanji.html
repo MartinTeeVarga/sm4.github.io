@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!-- The above 3 meta tags *must* come first in the head; any other head content must come *after* these tags -->
+    <title>Civilization V - Kanji</title>
+
+    <!-- Bootstrap -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
+    <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
+    <!--[if lt IE 9]>
+    <script src="https://oss.maxcdn.com/html5shiv/3.7.2/html5shiv.min.js"></script>
+    <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
+    <![endif]-->
+</head>
+<body>
+<div class="container">
+    <h1>Civilization V - Kanji</h1>
+    The list contains all Kanji used in Civilization V with all DLCs, sorted by frequency.
+
+    <table class="table table-striped">
+        <thead>
+            <tr>
+                <td>#</td>
+                <td>Kanji</td>
+                <td>Count</td>
+                <td>Links</td>
+            </tr>
+        </thead>
+        <tbody id="kanji-data">
+
+        </tbody>
+    </table>
+</div>
+<!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.2/jquery.min.js"></script>
+<!-- Include all compiled plugins (below), or include individual files as needed -->
+<script src="js/bootstrap.min.js"></script>
+
+<script>
+
+    $.getJSON( "kanji.json", function( data ) {
+        var c = 0;
+        $.each( data, function( key, value ) {
+            $('#kanji-data').append(
+                    $('<tr>')
+                            .append($('<td>').append(++c))
+                            .append($('<td>', {
+                                lang: 'ja',
+                                style: 'font-size: 25px'
+
+                            }).append(key))
+                            .append($('<td>').append(value))
+                            .append($('<td>')
+                                    .append($('<span>')).append($('<a>',{
+                                        text: 'Tangorin',
+                                        href: 'http://tangorin.com/kanji/' + key}))
+                                    .append(' ')
+                                    .append($('<span>')).append($('<a>',{
+                                        text: 'Jisho',
+                                        href: 'http://jisho.org/search/' + key}))
+                    )
+
+            );
+        });
+    });
+
+
+</script>
+</body>
+</html>
