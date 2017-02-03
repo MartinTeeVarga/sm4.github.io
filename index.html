@@ -1,0 +1,225 @@
+<!DOCTYPE HTML>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>4 bits</title>
+
+  
+  <meta name="author" content="Martin Varga (sm4)">
+  
+
+  
+
+  
+
+  <meta id="viewport" name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, minimum-scale=1, user-scalable=no, minimal-ui">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black">
+
+  
+
+  <meta property="og:site_name" content="4 bits"/>
+
+  
+  <meta property="og:image" content="/favicon.ico"/>
+  
+
+  <link href="/favicon.ico" rel="icon">
+  <link rel="alternate" href="/atom.xml" title="4 bits" type="application/atom+xml">
+  <link rel="stylesheet" href="/css/style.css" media="screen" type="text/css">
+</head>
+
+
+<body>
+<div class="blog">
+  <div class="content">
+
+    <header>
+  <div class="site-branding">
+    <h1 class="site-title">
+      <a href="/">4 bits</a>
+    </h1>
+    <p class="site-description"></p>
+  </div>
+  <nav class="site-navigation">
+    <ul>
+      
+        <li><a href="/">Home</a></li>
+      
+        <li><a href="/archives">Archives</a></li>
+      
+        <li><a href="/categories">Categories</a></li>
+      
+        <li><a href="/tags">Tags</a></li>
+      
+        <li><a href="/about">About</a></li>
+      
+    </ul>
+  </nav>
+</header>
+
+    <main class="site-main posts-loop">
+    
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2017/02/03/Gradle-Release-Plugin-in-Multi-project-Gradle-build/"><span>Gradle Release Plugin in Multi project Gradle build</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2017/02/03/Gradle-Release-Plugin-in-Multi-project-Gradle-build/" rel="bookmark">
+        <time class="entry-date published" datetime="2017-02-03T02:30:40.000Z">
+          2017-02-03
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>The typical software release at the end of iteration includes incrementing the software version, tagging the release in version control and publishing production artifacts. The <a href="https://github.com/researchgate/gradle-release" target="_blank" rel="external">Gradle Release Plugin</a> does all that and more. It makes releasing a Gradle project very easy. Until you need to release a multi-project gradle build. The official workaround did not work for me, so I have created my own.</p>
+<h2 id="The-problem"><a href="#The-problem" class="headerlink" title="The problem"></a>The problem</h2><p>When simply adding the release plugin to the root project, tasks that should be run only once (such as VCS tagging) are run multiple times, thus failing the build. When adding the release plugin to the subprojects, there are issues with the separate versions and the fact that the VCS repository root is in the parent directory. </p>
+<h2 id="Official-workaround"><a href="#Official-workaround" class="headerlink" title="Official workaround"></a>Official workaround</h2><p>The workaround described on the plugin homepage recommends to add the release plugin to the root and then run the release tasks separately for sub-projects. In my opinion, this creates a confusion between versions (i.e. each sub-project is released on its own, increasing the version every time).</p>
+<h2 id="My-workaround"><a href="#My-workaround" class="headerlink" title="My workaround"></a>My workaround</h2><p>Based on the official workaround, it automates the release process and avoids creating multiple versions. The solution is to disable the release task in sub-projects to skip any release tasks executing on a wrong level while still publishing all sub-projects artifacts. Note that I am using the gradle wrapper, so I have added it to the script example.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div></pre></td><td class="code"><pre><div class="line">plugins &#123;</div><div class="line">    id &apos;net.researchgate.release&apos; version &apos;2.3.5&apos;</div><div class="line">&#125;</div><div class="line"> </div><div class="line">allprojects &#123;</div><div class="line">    apply plugin: &apos;maven-publish&apos;</div><div class="line">&#125;</div><div class="line"> </div><div class="line">subprojects &#123;</div><div class="line">    task release(overwrite: true) &#123;</div><div class="line">        //overwrite release task in the subprojects</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"> </div><div class="line">afterReleaseBuild.dependsOn(&apos;:moduleA:publish&apos;, &apos;:moduleB:publish&apos;)</div><div class="line"> </div><div class="line">task wrapper(type: Wrapper) &#123;</div><div class="line">    gradleVersion = &apos;2.11&apos;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>To disable the release task in all sub-modules, it’s possible to overwrite it in the main script subprojects part with an empty task. To enable publishing of the sub-modules artifacts, the dependency on the sub-project publish task must be defined as per the example for each sub-project that should have its artifacts published.</p>
+<p>To release the project, simply run:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">gradlew release</div></pre></td></tr></table></figure></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/build/">build</a>
+    </span>
+    
+
+    
+    
+
+    <span class="post-tags">
+      <i class="icon-tags"></i>
+        <a href="/tags/gradle/">gradle</a><a href="/tags/release/">release</a>
+    </span>
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
+    <h3 class="article-title"><a href="/2015/07/16/hosting-maven-repository-in-amazon-s3/"><span>Hosting a Maven Repository in Amazon S3</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2015/07/16/hosting-maven-repository-in-amazon-s3/" rel="bookmark">
+        <time class="entry-date published" datetime="2015-07-15T14:00:00.000Z">
+          2015-07-16
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>We had a simple requirement to host our internal deployed artifacts in the Amazon Cloud. We have migrated most of our builds to Gradle. Since version 2.4, Gradle added support for repositories hosted in Amazon AWS S3.</p>
+<h2 id="Ivy-vs-Maven"><a href="#Ivy-vs-Maven" class="headerlink" title="Ivy vs. Maven"></a>Ivy vs. Maven</h2><p>Both Ivy and Maven repositories in S3 are supported by Gradle. But since Ivy is trying to mimic maven and we already had a maven repo, I picked maven. </p>
+<h2 id="Setup"><a href="#Setup" class="headerlink" title="Setup"></a>Setup</h2><p>I’ve created an S3 bucket and inside a simple structure:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">maven</div><div class="line">|- snapshots</div><div class="line">|- internal</div></pre></td></tr></table></figure>
+<h2 id="Getting-dependencies"><a href="#Getting-dependencies" class="headerlink" title="Getting dependencies"></a>Getting dependencies</h2><p>The following code in <code>build.gradle</code> enables download of the dependencies: </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">apply plugin: &apos;maven&apos;</div><div class="line"></div><div class="line">repositories &#123;</div><div class="line">    maven &#123;</div><div class="line">        name &quot;s3snapshots&quot;</div><div class="line">        url &quot;s3://bucket-name/maven/snapshots&quot;</div><div class="line">        credentials(AwsCredentials) &#123;</div><div class="line">            accessKey &quot;aws access key&quot;</div><div class="line">            secretKey &quot;aws secret key&quot;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    maven &#123;</div><div class="line">        name &quot;s3internal&quot;</div><div class="line">        url &quot;s3://bucket-name/maven/internal&quot;</div><div class="line">        credentials(AwsCredentials) &#123;</div><div class="line">            accessKey &quot;aws access key&quot;</div><div class="line">            secretKey &quot;aws secret key&quot;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="Publishing-dependencies"><a href="#Publishing-dependencies" class="headerlink" title="Publishing dependencies"></a>Publishing dependencies</h2><p>I played with the uploadArchives gradle task, but it was creating the Ivy structure. I have decided to go with the newer maven-publish plugin. </p>
+<p>The following shows how to switch between two repositories and how to reference previously defined repositories. The switching works very well<br>with <a href="https://github.com/researchgate/gradle-release" target="_blank" rel="external">Gradle Release Plugin</a> that we are using now.</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">apply plugin: &apos;maven-publish&apos;</div><div class="line"></div><div class="line">publishing &#123;</div><div class="line">    publications &#123;</div><div class="line">        mavenJava(MavenPublication) &#123;</div><div class="line">            from components.java</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">    repositories &#123;</div><div class="line">        add project.version.endsWith(&apos;-SNAPSHOT&apos;) ? project.repositories.s3RepoSnapshots : project.repositories.s3RepoInternal</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>To include source jars, test jars or other archives, e.g. from distribution plugin, add this to the publication.<br>Group Id, Artifact Id can be set here as well. </p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line">apply plugin: &apos;maven-publish&apos;</div><div class="line"></div><div class="line">publishing &#123;</div><div class="line">    publications &#123;</div><div class="line">        maven(MavenPublication) &#123;</div><div class="line">            groupId `group`</div><div class="line">            artifactId &apos;artifact&apos;</div><div class="line">            from components.java</div><div class="line">            artifact sourceJar &#123;</div><div class="line">                classifier &quot;sources&quot;</div><div class="line">            &#125;</div><div class="line">            artifact testJar &#123;</div><div class="line">                classifier &quot;test&quot;</div><div class="line">            &#125;</div><div class="line">            artifact distZip &#123;</div><div class="line">                classifier &quot;zip&quot;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h2 id="Migration-from-other-maven-repositories"><a href="#Migration-from-other-maven-repositories" class="headerlink" title="Migration from other maven repositories"></a>Migration from other maven repositories</h2><p>I have successfully migrated Apache Archiva to S3 simply by copying the whole directory structure from Archiva’s data folder to S3. Any maven repository should be possible to migrate the same way.</p>
+<h2 id="Missing-features"><a href="#Missing-features" class="headerlink" title="Missing features"></a>Missing features</h2><p>The main disadvantage of this solution is the lack of administration and inability to prune snapshots. I am planning to create a utility that will take care of that.</p>
+<p>Fortunately the S3 cost is very small so this will do for now.</p>
+<h2 id="Example"><a href="#Example" class="headerlink" title="Example"></a>Example</h2><p><a href="https://github.com/sm4/s3repo-demo" target="_blank" rel="external">You can find an example implementation on GitHub.</a></p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/build/">build</a>
+    </span>
+    
+
+    
+    
+
+    <span class="post-tags">
+      <i class="icon-tags"></i>
+        <a href="/tags/gradle/">gradle</a><a href="/tags/s3/">s3</a><a href="/tags/aws/">aws</a><a href="/tags/cloud/">cloud</a><a href="/tags/maven/">maven</a><a href="/tags/build/">build</a>
+    </span>
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+
+<nav class="pagination">
+  
+  
+</nav>
+    </main>
+
+    <footer class="site-footer">
+  <p class="site-info">
+    Proudly powered by <a href="https://hexo.io/" target="_blank">Hexo</a> and
+    Theme by <a href="https://github.com/sm4/Hacker" target="_blank">Customized Hacker</a>
+    </br>
+    
+    &copy; 2017 Martin Varga (sm4)
+    
+  </p>
+</footer>
+    
+  </div>
+</div>
+</body>
+</html>
