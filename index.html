@@ -65,6 +65,62 @@
 
   
     
+    <h3 class="article-title"><a href="/2017/02/07/Vue-Nightwatch-e2e-tests-on-Travis-CI-in-Chrome/"><span>Vue Nightwatch e2e tests on Travis CI in Chrome</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2017/02/07/Vue-Nightwatch-e2e-tests-on-Travis-CI-in-Chrome/" rel="bookmark">
+        <time class="entry-date published" datetime="2017-02-06T22:12:43.000Z">
+          2017-02-07
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p><a href="https://travis-ci.org/" target="_blank" rel="external">Travis CI</a> is a great continuous integration tool available for free for open source projects with seamless GitHub integration. It can test various projects thanks to different virtual machine images available. However if you need to mix languages, things get a bit more complex.</p>
+<p>If you have a JavaScript project with e2e tests using <a href="http://nightwatchjs.org/" target="_blank" rel="external">Nightwatch</a>, you won’t be able to run them on NodeJS Travis image. Nightwatch depends on Java to run the Selenium server. Fortunately the Java image contains <code>node</code>, <code>npm</code> and <code>nvm</code>. So to make it work, I used the following Travis configuration in <code>.travis.yaml</code>:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div></pre></td><td class="code"><pre><div class="line">sudo: required</div><div class="line">dist: trusty</div><div class="line">language: java</div><div class="line">addons:</div><div class="line">  apt:</div><div class="line">    sources:</div><div class="line">      - google-chrome</div><div class="line">    packages:</div><div class="line">      - google-chrome-stable</div><div class="line">jdk:</div><div class="line">  - oraclejdk8</div><div class="line">node_js:</div><div class="line">  - 6</div><div class="line">before_install:</div><div class="line">  - export CHROME_BIN=chromium-browser</div><div class="line">  - export DISPLAY=:99.0</div><div class="line">  - sh -e /etc/init.d/xvfb start</div><div class="line">  - nvm install 6.9.5</div><div class="line">  - npm install -g yarn</div><div class="line">install:</div><div class="line">  - yarn install</div><div class="line">script:</div><div class="line">  - yarn test</div></pre></td></tr></table></figure>
+<p>The <code>sudo</code> is required to install <code>chrome</code>. The latest Nightwatch requires Java 8. I am not sure if the <code>node_js</code> has any effect and might as well try to remove it. I think the image is running only an older version of <code>node</code>. The <code>before_install</code> part sets environmental properties to point to <code>chrome</code> and a virtual display. Then the <code>xvfb</code> creates the virtual display that is used by <code>chrome</code>. Last the version of <code>node</code> that I am using for development is installed. Finally <code>yarn</code> is installed and tests are run through <code>yarn</code>.</p>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+
+    
+    
+
+    <span class="post-tags">
+      <i class="icon-tags"></i>
+        <a href="/tags/javascript/">javascript</a><a href="/tags/testing/">testing</a><a href="/tags/nightwatch/">nightwatch</a><a href="/tags/travis/">travis</a><a href="/tags/e2e/">e2e</a>
+    </span>
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2017/02/03/Gradle-Release-Plugin-in-Multi-project-Gradle-build/"><span>Gradle Release Plugin in Multi project Gradle build</span></a></h3>
     
   
