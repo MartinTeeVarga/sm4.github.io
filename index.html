@@ -65,6 +65,89 @@
 
   
     
+    <h3 class="article-title"><a href="/2017/04/25/Continous-testing-with-JUnit-and-Gradle/"><span>Continous testing with JUnit and Gradle</span></a></h3>
+    
+  
+
+  <div class="article-top-meta">
+    <span class="posted-on">
+      <a href="/2017/04/25/Continous-testing-with-JUnit-and-Gradle/" rel="bookmark">
+        <time class="entry-date published" datetime="2017-04-25T10:55:15.000Z">
+          2017-04-25
+        </time>
+      </a>
+    </span>
+  </div>
+
+
+  
+
+  <div class="article-content">
+    <div class="entry">
+      
+        <p>One of the features I like when working on a small library is continuous testing. I used to setup my IDE to re-run my tests whenever a file changes. This article describes how to setup this kind of testing with Gradle and JUnit.</p>
+<h2 id="Continuous-tests"><a href="#Continuous-tests" class="headerlink" title="Continuous tests"></a>Continuous tests</h2><p>Gradle can turn any build into a <a href="https://docs.gradle.org/current/userguide/continuous_build.html" target="_blank" rel="external">continuous build</a>. Just run any target you want with the <code>--continuous</code> flag:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">gradle test --continuous</div></pre></td></tr></table></figure>
+<p>Whenever a test file changes, Gradle will re-compile the whole project and run all tests. With the current Gradle changes to incremental build and the enhancements to compilation avoidance, the compile steps are usually very fast. This switch is usually enough for a small project.</p>
+<h2 id="Re-running-only-changed-tests"><a href="#Re-running-only-changed-tests" class="headerlink" title="Re-running only changed tests"></a>Re-running only changed tests</h2><p>However the tests run-time can be long and running only changed tests would improve productivity. In that case, Gradle AFAIK doesn’t offer anything out of the box. But it’s quite easy to add this functionality using a custom <a href="https://docs.gradle.org/current/userguide/custom_tasks.html#sec:implementing_an_incremental_task" target="_blank" rel="external">incremental task</a>.</p>
+<p>First, let’s start by extending the Gradle’s Test task and adding with the incremental inputs argument:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">class TestWatcher extends Test &#123;</div><div class="line"></div><div class="line">    @TaskAction</div><div class="line">    void executeTests(IncrementalTaskInputs inputs) &#123;</div><div class="line">        super.executeTests()</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
+<p>Well this doesn’t do anything, but run the tests. But it shows that it’s possible to override the original @TaskAction. The <code>inputs</code> argument now gives us the ability to distinguish between two states:</p>
+<ol>
+<li>Something before the test task changed, therefore the task can’t be run incrementally</li>
+<li>Only the test classes changed, and in that case it will give us the list of changed files.</li>
+</ol>
+<p>It also gives us the files which have been removed, but we don’t care about them. So let’s enhance the task:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">class TestWatcher extends Test &#123;</div><div class="line"></div><div class="line">    @TaskAction</div><div class="line">    void executeTests(IncrementalTaskInputs inputs) &#123;</div><div class="line">        if (inputs.incremental) &#123;</div><div class="line">            inputs.outOfDate &#123; InputFileDetails change -&gt;</div><div class="line">                // setup only the changed files for testing</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        super.executeTests()</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>In case the build is incremental at this point, we get our list of changes. To set them up for testing, we can use the Gradle’s ability to run only tests that pass a <a href="https://docs.gradle.org/current/javadoc/org/gradle/api/tasks/testing/TestFilter.html" target="_blank" rel="external">filter</a>. The filter takes a class name in package.class format, but the incremental outputs give us files. We’ll have to change the file names into class names and strip the absolute path:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line">class TestWatcher extends Test &#123;</div><div class="line"></div><div class="line">    @TaskAction</div><div class="line">    void executeTests(IncrementalTaskInputs inputs) &#123;</div><div class="line">        if (inputs.incremental) &#123;</div><div class="line">            def outputDir = this.project.sourceSets[&apos;test&apos;].output.classesDir.absolutePath</div><div class="line">            this.filter.includePatterns = []</div><div class="line">            inputs.outOfDate &#123; InputFileDetails change -&gt;</div><div class="line">                def candidate = change.file.absolutePath</div><div class="line">                if (candidate.endsWith(&apos;.class&apos;)) &#123;</div><div class="line">                    candidate = candidate</div><div class="line">                            .replace(&apos;.class&apos;, &apos;&apos;)</div><div class="line">                            .replace(outputDir, &apos;&apos;)</div><div class="line">                            .substring(1)</div><div class="line">                            .replace(File.separator, &apos;.&apos;)</div><div class="line">                    this.filter.includePatterns += candidate</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        super.executeTests()</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>The first replace strips the file extension. The second then removes the path to the folder. The substring removes the first file separator and the last replace changes all file separators into dots. The classes then populate the set of filter patterns in <code>filter.includePattern</code>.</p>
+<p>And that’s it. Add the task to the main gradle build file:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">task testWatcher(type: TestWatcher) &#123;</div><div class="line">    testLogging &#123;</div><div class="line">        showStandardStreams = true</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>And run the build with:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">gradle testWatcher --continuous</div></pre></td></tr></table></figure>
+<p>When you change any of the classes, the tests will be re-run. If you change only a single test class, only that class will be run.</p>
+<h2 id="See-also"><a href="#See-also" class="headerlink" title="See also"></a>See also</h2><ul>
+<li><a href="https://github.com/sm4/gradle-example-continuous-testing" target="_blank" rel="external">Full example in GitHub Repository</a></li>
+</ul>
+
+      
+    </div>
+
+  </div>
+
+  <div class="article-footer">
+    <div class="article-meta pull-left">
+
+    
+      
+
+    <span class="post-categories">
+      <i class="icon-categories"></i>
+        <a href="/categories/build/">build</a>
+    </span>
+    
+
+    
+    
+
+    <span class="post-tags">
+      <i class="icon-tags"></i>
+        <a href="/tags/gradle/">gradle</a><a href="/tags/testing/">testing</a><a href="/tags/continous/">continous</a><a href="/tags/junit/">junit</a><a href="/tags/java/">java</a>
+    </span>
+    
+
+    </div>
+
+    
+  </div>
+</article>
+
+
+
+  <article>
+
+  
+    
     <h3 class="article-title"><a href="/2017/02/07/Vue-Nightwatch-e2e-tests-on-Travis-CI-in-Chrome/"><span>Vue Nightwatch e2e tests on Travis CI in Chrome</span></a></h3>
     
   
